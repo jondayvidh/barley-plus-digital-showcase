@@ -78,8 +78,8 @@ form.addEventListener('submit', event => {
   };
   // Front-end demonstration only: no order is transmitted or stored.
   status.classList.remove('error');
-  status.textContent = `Thanks, ${enquiry.name}! Your ${enquiry.bundle.toLowerCase()} enquiry is ready. Connect this form to your order-management service before accepting real orders.`;
-  form.querySelector('.submit-order').textContent = 'Enquiry completed ✓';
+  status.textContent = `Thanks, ${enquiry.name}! Your ${enquiry.bundle.toLowerCase()} enquiry is ready. This demo form doesn’t send orders yet, so connect it to your order system before going live.`;
+  form.querySelector('.submit-order').textContent = 'Enquiry ready ✓';
   form.querySelector('.submit-order').disabled = true;
 });
 
