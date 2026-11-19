@@ -1,5 +1,5 @@
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 /* Navigation */
 const menuToggle = $('.menu-toggle');
@@ -38,9 +38,24 @@ const drawer = $('#order-drawer');
 const scrim = $('#drawer-scrim');
 const form = $('#order-form');
 const bundleNames = {1: 'Single box', 2: 'Double box', 3: 'Triple box', 9: 'Family pack'};
+const submitButton = $('.submit-order');
+const submitDefaultHTML = submitButton.innerHTML;
 let selectedQty = 1;
+let enquirySent = false;
+
+// After a completed enquiry, give the next bundle choice a fresh form
+function resetEnquiry() {
+  if (!enquirySent) return;
+  form.reset();
+  $('#form-status').textContent = '';
+  submitButton.innerHTML = submitDefaultHTML;
+  submitButton.disabled = false;
+  enquirySent = false;
+}
 
 function openDrawer(qty) {
+  if (!bundleNames[qty]) return;
+  resetEnquiry();
   selectedQty = qty;
   $('#selected-name').textContent = bundleNames[qty];
   $('#selected-quantity').textContent = `${qty} ${qty === 1 ? 'box' : 'boxes'} · ${qty * 10} sachets`;
@@ -68,10 +83,11 @@ $('#change-bundle').addEventListener('click', () => {
 
 form.addEventListener('submit', event => {
   event.preventDefault();
+  if (enquirySent || submitButton.disabled) return;
   if (!form.reportValidity()) return;
   // Front-end demonstration only: no order is transmitted or stored.
   const name = $('#customer-name').value.trim();
-  const submitButton = $('.submit-order');
+  enquirySent = true;
   $('#form-status').textContent = `Thanks, ${name}! Your ${bundleNames[selectedQty].toLowerCase()} enquiry is ready. This demo form doesn’t send orders yet, so connect it to your order system before going live.`;
   submitButton.textContent = 'Enquiry ready ✓';
   submitButton.disabled = true;
