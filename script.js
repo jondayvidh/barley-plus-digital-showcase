@@ -1,53 +1,44 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
-/* Navigation */
 const menuToggle = $('.menu-toggle');
 const mainNav = $('.main-nav');
+const modal = $('#details-modal');
+const modalClose = $('.modal-close');
+const drawer = $('#order-drawer');
+const scrim = $('#drawer-scrim');
+const form = $('#order-form');
+const formStatus = $('#form-status');
+const submitButton = $('.submit-order');
+
+const bundleNames = {1: 'Single box', 2: 'Double box', 3: 'Triple box', 9: 'Family pack'};
+const submitDefaultHTML = submitButton.innerHTML;
+let selectedQty = 1;
+let enquirySent = false;
 
 function setNavOpen(isOpen) {
   mainNav.classList.toggle('open', isOpen);
   menuToggle.setAttribute('aria-expanded', String(isOpen));
   menuToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
 }
-menuToggle.addEventListener('click', () => setNavOpen(!mainNav.classList.contains('open')));
-$$('.main-nav a').forEach(link => link.addEventListener('click', () => setNavOpen(false)));
-
-/* Product details modal */
-const modal = $('#details-modal');
 
 function openModal() {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('no-scroll');
-  $('.modal-close').focus();
+  modalClose.focus();
 }
+
 function closeModal() {
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('no-scroll');
 }
-$('#quality-details').addEventListener('click', openModal);
-$('#footer-details').addEventListener('click', openModal);
-$('.modal-close').addEventListener('click', closeModal);
-$('.modal-done').addEventListener('click', closeModal);
-modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
 
-/* Order enquiry drawer */
-const drawer = $('#order-drawer');
-const scrim = $('#drawer-scrim');
-const form = $('#order-form');
-const bundleNames = {1: 'Single box', 2: 'Double box', 3: 'Triple box', 9: 'Family pack'};
-const submitButton = $('.submit-order');
-const submitDefaultHTML = submitButton.innerHTML;
-let selectedQty = 1;
-let enquirySent = false;
-
-// After a completed enquiry, give the next bundle choice a fresh form
 function resetEnquiry() {
   if (!enquirySent) return;
   form.reset();
-  $('#form-status').textContent = '';
+  formStatus.textContent = '';
   submitButton.innerHTML = submitDefaultHTML;
   submitButton.disabled = false;
   enquirySent = false;
@@ -65,12 +56,21 @@ function openDrawer(qty) {
   document.body.classList.add('no-scroll');
   $('#customer-name').focus({preventScroll: true});
 }
+
 function closeDrawer() {
   drawer.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
   scrim.classList.remove('open');
   document.body.classList.remove('no-scroll');
 }
+
+menuToggle.addEventListener('click', () => setNavOpen(!mainNav.classList.contains('open')));
+$$('.main-nav a').forEach(link => link.addEventListener('click', () => setNavOpen(false)));
+
+$$('#quality-details, #footer-details').forEach(button => button.addEventListener('click', openModal));
+$$('.modal-close, .modal-done').forEach(button => button.addEventListener('click', closeModal));
+modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+
 $$('.bundle-card').forEach(card => {
   $('.bundle-button', card).addEventListener('click', () => openDrawer(Number(card.dataset.qty)));
 });
@@ -83,17 +83,14 @@ $('#change-bundle').addEventListener('click', () => {
 
 form.addEventListener('submit', event => {
   event.preventDefault();
-  if (enquirySent || submitButton.disabled) return;
-  if (!form.reportValidity()) return;
-  // Front-end demonstration only: no order is transmitted or stored.
-  const name = $('#customer-name').value.trim();
+  if (enquirySent || !form.reportValidity()) return;
   enquirySent = true;
-  $('#form-status').textContent = `Thanks, ${name}! Your ${bundleNames[selectedQty].toLowerCase()} enquiry is ready. This demo form doesn’t send orders yet, so connect it to your order system before going live.`;
+  const name = $('#customer-name').value.trim();
+  formStatus.textContent = `Thanks, ${name}! Your ${bundleNames[selectedQty].toLowerCase()} enquiry is ready. This demo form doesn’t send orders yet, so connect it to your order system before going live.`;
   submitButton.textContent = 'Enquiry ready ✓';
   submitButton.disabled = true;
 });
 
-/* Escape closes anything open */
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   closeModal();
@@ -101,18 +98,15 @@ document.addEventListener('keydown', event => {
   setNavOpen(false);
 });
 
-/* Reveal on scroll (skipped when reduced motion is preferred) */
 if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  const revealTargets = $$('.ingredient-card, .goodness-item, .step-card, .bundle-card, .quality-stamp');
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      }
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
     });
   }, {threshold: 0.12});
-  revealTargets.forEach(el => {
+  $$('.ingredient-card, .goodness-item, .step-card, .bundle-card, .quality-stamp').forEach(el => {
     el.classList.add('reveal');
     observer.observe(el);
   });
